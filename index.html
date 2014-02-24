@@ -104,11 +104,12 @@
 
 
         // sContainer: object.sContainer.percentiles
-        function graphObject(title, url, sContainer) {
+        function graphObject(title, url, sContainer, valueLabel) {
           return {
             title: title,
             url: url,
             statisticsContainer: sContainer,
+            valueLabel: valueLabel + '\nFargede områder viser 10-90% og 25-75% persentiler',
             divId: function() {
               return this.title.replace(/\s+/g,'');
             },
@@ -128,7 +129,10 @@
                 curveType: 'function',
                 height: 420,
                 lineWidth: 2,
-                intervals: { style: 'area' }
+                intervals: { style: 'area' },
+                legend: {position: 'top', maxLines: 3},
+                hAxis: {title: 'År'},
+                vAxis: {title: this.valueLabel}
               });
             },
             dataTable: {},
@@ -136,16 +140,17 @@
               this.dataTable = new google.visualization.DataTable();
               this.dataTable.addColumn('string', 'År');
               this.dataTable.addColumn('number', 'Snitt');
-              this.dataTable.addColumn({id:'i2', type:'number', role:'interval', legend: '10'});
-              this.dataTable.addColumn({id:'i1', type:'number', role:'interval', legend: '25'});
-              this.dataTable.addColumn({id:'i1', type:'number', role:'interval', legend: '75'});
-              this.dataTable.addColumn({id:'i2', type:'number', role:'interval', legend: '90'});
+              this.dataTable.addColumn({id:'i2', type:'number', role:'interval', label: '10'});
+              this.dataTable.addColumn({id:'i1', type:'number', role:'interval', label: '25'});
+              this.dataTable.addColumn({id:'i1', type:'number', role:'interval', label: '75'});
+              this.dataTable.addColumn({id:'i2', type:'number', role:'interval', label: '90'});
+              console.log(this.dataTable);
             }
           }
         }
         var graphs = [
-          new graphObject('Stamtavlekompletthet','/dogpopulation/graph/pedigreecompleteness', 'pedigreeCompletenessStatistics'),
-          new graphObject('Innavl','/dogpopulation/graph/inbreeding', 'statistics')
+          new graphObject('Stamtavlekompletthet','/dogpopulation/graph/pedigreecompleteness', 'pedigreeCompletenessStatistics', 'Kompletthet (%)'),
+          new graphObject('Innavl','/dogpopulation/graph/inbreeding', 'statistics', 'Innavlsgrad')
         ];
         //?generations=6&breed=Rottweiler&minYear=1999&maxYear=2001
 
