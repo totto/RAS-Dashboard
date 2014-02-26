@@ -59,10 +59,10 @@
         </div>
 
       </div>
-      <div id="slider"></div>
+      <!--div id="slider"></div-->
 
       <div id="detailsContainer" style="display:none">
-
+        <h3>0</h3>
         <!-- Nav tabs -->
         <ul class="nav nav-tabs">
           <li class="active"><a href="#statistikk" data-toggle="tab">Statistikk</a></li>
@@ -222,7 +222,10 @@
                   legend: {position: 'top', maxLines: 3}
                 });
 
+
+
                 $('#detailsContainer').show().appendTo( $('#'+this.divId()) );
+                $('#detailsContainer h3').html('Statistikk for ' + year);
                 
                 $('.nav-tabs li:eq(2) a').tab('show');
                 $(detailDiv).appendTo($('#frekvens'));
