@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <title>RAS Dashboard</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css" rel="stylesheet">
@@ -14,8 +15,9 @@
     </script>
     <style>
       body {background-color: #ddd;}
-      .container {background-color: #fff;}
+      .container {background-color: #fff; width: 100%;}
       .bottom { vertical-align: bottom !important; }
+      th, td {padding: .3em;}
     </style>
   </head>
   <body>
@@ -31,11 +33,11 @@
               <input type="text" class="form-control" name="breed" id="breed" value="Rottweiler">
             </div>
             <div class="form-group">
-              <label for="minYear">Fra år</label>
+              <label for="minYear">Registrert fra og med år</label>
               <input type="number" class="form-control" placeholder="Fra år" id="minYear" value="1993" size="4"/>
             </div>
             <div class="form-group">
-              <label for="maxYear">Til år</label>
+              <label for="maxYear">til og med år</label>
               <input type="number" class="form-control" placeholder="Til år" id="maxYear" value="2013" size="4"/>
             </div>
             <div class="form-group">
@@ -44,9 +46,9 @@
                 <option value="3">3 ledd</option>
                 <option value="4">4 ledd</option>
                 <option value="5">5 ledd</option>
-                <option value="6">6 ledd</option>
+                <option value="6" selected>6 ledd</option>
                 <option value="7">7 ledd</option>
-                <option value="8" selected>8 ledd</option>
+                <option value="8">8 ledd</option>
                 <option value="9">9 ledd</option>
               </select>
             </div>
@@ -57,12 +59,38 @@
         </div>
 
       </div>
+      <div id="slider"></div>
+
+      <div id="detailsContainer" style="display:none">
+
+        <!-- Nav tabs -->
+        <ul class="nav nav-tabs">
+          <li class="active"><a href="#statistikk" data-toggle="tab">Statistikk</a></li>
+          <li><a href="#frekvens" data-toggle="tab">Frekvens</a></li>
+          <li><a href="#over12" data-toggle="tab">Hunder over 12,5 %</a></li>
+          <li><a href="#over25" data-toggle="tab">Hunder over 25 %</a></li>
+          <li><a href="#over30" data-toggle="tab">Hunder over 30 %</a></li>
+        </ul>
+
+        <!-- Tab panes -->
+        <div class="tab-content" style="border:1px solid #ddd; border-top: none; padding:1em">
+          <div class="tab-pane active" id="statistikk"></div>
+          <div class="tab-pane" id="frekvens">
+            Hei sveis!
+          </div>
+          <div class="tab-pane" id="over12"></div>
+          <div class="tab-pane" id="over25"></div>
+          <div class="tab-pane" id="over30"></div>
+        </div>
+
+      </div>
+
       <div class="row" id="graphcontainer">
       </div>
     </div>
 
     <script>
-      (function(){
+      var GRAPHS = (function(){
 
 
         function updateUrl() {
@@ -109,82 +137,184 @@
             title: title,
             url: url,
             statisticsContainer: sContainer,
-            valueLabel: valueLabel + '\nFargede områder viser 10-90% og 25-75% persentiler',
+            valueLabel: valueLabel,
+            data: {},
             divId: function() {
               return this.title.replace(/\s+/g,'');
             },
+            detailDivId: function() {
+              return this.divId()+'_detail';
+            },
             storeData: function(data, year){
+              this.data[year+''] = data;
               this.dataTable.addRow([
                 '' + year,
-                data[this.statisticsContainer].percentile50,
+                data[this.statisticsContainer].mean,
+
+                data[this.statisticsContainer].percentile10,
+                data[this.statisticsContainer].percentile25,
+                data[this.statisticsContainer].percentile75,
+                data[this.statisticsContainer].percentile90,
+
                 data[this.statisticsContainer].percentile10,
                 data[this.statisticsContainer].percentile25,
                 data[this.statisticsContainer].percentile75,
                 data[this.statisticsContainer].percentile90
               ]);
               this.dataTable.sort(0);
-              var chart = new google.visualization['LineChart']( document.getElementById(this.divId()) );
-              chart.draw(this.dataTable, { 
+
+              this.chart = new google.visualization['LineChart']( document.getElementById(this.divId()) );
+              this.chart.draw(this.dataTable, { 
                 title: this.title, 
                 curveType: 'function',
                 height: 420,
-                lineWidth: 2,
                 intervals: { style: 'area' },
+                colors: ['#428bca', '#5be', '#2d8', '#2d8', '#5be', '#428bca', '#428bca', '#428bca', '#428bca', '#428bca', '#428bca'],
                 legend: {position: 'top', maxLines: 3},
                 hAxis: {title: 'År'},
-                vAxis: {title: this.valueLabel}
+                vAxis: {title: this.valueLabel, minValue:0}
               });
+
+              google.visualization.events.addListener(this.chart, 'select', function(){
+                var year = activeGraph.dataTable.getFormattedValue( activeGraph.chart.getSelection()[0].row, 0 );
+                console.log( 'Show details for year ', year );
+                activeGraph.drawDetails(year);
+              });
+
             },
+            chart: {},
             dataTable: {},
             init: function() {
               this.dataTable = new google.visualization.DataTable();
               this.dataTable.addColumn('string', 'År');
               this.dataTable.addColumn('number', 'Snitt');
+              this.dataTable.addColumn({type:'number', label:'10 persentil'});
+              this.dataTable.addColumn({type:'number', label:'25 persentil'});
+              this.dataTable.addColumn({type:'number', label:'75 persentil'});
+              this.dataTable.addColumn({type:'number', label:'90 persentil'});
               this.dataTable.addColumn({id:'i2', type:'number', role:'interval', label: '10'});
               this.dataTable.addColumn({id:'i1', type:'number', role:'interval', label: '25'});
               this.dataTable.addColumn({id:'i1', type:'number', role:'interval', label: '75'});
               this.dataTable.addColumn({id:'i2', type:'number', role:'interval', label: '90'});
-              console.log(this.dataTable);
+            },
+            drawDetails: function(year) {
+              console.log('Draw details:', this.data[year]);
+
+              if( typeof this.data[year].frequency !== 'undefined' ) {
+                var data = this.data[year];
+                var fr = data.frequency;
+                var d = new google.visualization.DataTable();
+                d.addColumn('number', 'Innavlsgrad');
+                d.addColumn('number', 'Antall hunder');
+                for(var i = 0; i < fr.length; i++ ) {
+                  d.addRow([i, fr[i] ]);
+                }
+                var detailDiv = document.getElementById(this.detailDivId());
+                var chart = new google.visualization['ColumnChart']( detailDiv );
+                chart.draw(d, { 
+                  title: this.title + ' ' + year, 
+                  height: 420,
+                  legend: {position: 'top', maxLines: 3}
+                });
+                $('#detailsContainer').show().appendTo( $('#'+this.divId()) );
+                
+                $('.nav-tabs li:eq(2) a').tab('show');
+                $(detailDiv).appendTo($('#frekvens'));
+                $('.nav-tabs a:first').tab('show');
+
+                $('#over12').html( this.getDogList( data.dogsWithCoefficientAbove1250 ) );
+                $('#over25').html( this.getDogList( data.dogsWithCoefficientAbove2500 ) );
+                $('#over30').html( this.getDogList( data.dogsWithCoefficientAbove3000 ) );
+
+                var tbl = '<table>';
+                var details = [
+                  'Antall hunder i beregning', data.numberOfDogs,
+                  'Generasjoner', data.generations, 
+                  'Gjennomsnitt', data.statistics.mean,
+                  'Min', data.statistics.min,
+                  'Max', data.statistics.max,
+                  'Standardavvik', data.statistics.standardDeviation
+                  ];
+                for( var d = 0; d < details.length; d++ ) {
+                  tbl+='<tr><th>'+details[d]+'</th><td>'+details[++d]+'</td></tr>';
+                }
+                tbl+='</table>';
+                $('#statistikk').html(tbl)
+
+              }
+            },
+            getDogList: function(dogs) {
+              var html = '<ul>';
+              for(var i = 0; i<dogs.length; i++) {
+                html += '<li><a href="http://dogid.nkk.no/?query='+dogs[i].uuid+'">'+dogs[i].regNo+'</a></li>';
+              }
+              if(dogs.length < 1 ) {
+                html += '<li>Ingen hunder</li>';
+              }
+              html+='</ul>';
+              return html;
             }
           }
         }
         var graphs = [
-          new graphObject('Stamtavlekompletthet','/dogpopulation/graph/pedigreecompleteness', 'pedigreeCompletenessStatistics', 'Kompletthet (%)'),
-          new graphObject('Innavl','/dogpopulation/graph/inbreeding', 'statistics', 'Innavlsgrad')
+          new graphObject('Innavl','/dogpopulation/graph/inbreeding', 'statistics', 'Innavlsgrad'),
+          new graphObject('Stamtavlekompletthet','/dogpopulation/graph/pedigreecompleteness', 'pedigreeCompletenessStatistics', 'Kompletthet (%)')
         ];
         //?generations=6&breed=Rottweiler&minYear=1999&maxYear=2001
+
+        var activeGraph = graphs[0];
 
         function initiateGraphs(g){
           var html = '';
           for(var i=0;i<g.length;i++){
-            html += '<div id="'+g[i].divId()+'" class="col-md-12"><h3>'+g[i].title+'</h3></div>';
+            html += '<div id="'+g[i].divId()+'" class="col-md-12 graphDiv" data-index="'+i+'"><h3>'+g[i].title+'</h3></div>';
+            html += '<div id="'+g[i].detailDivId()+'"></div>';
             g[i].init();
           }
           $('#graphcontainer').append(html);
+          $('.graphDiv').click(function(){
+            var index = $(this).data('index');
+            activeGraph = graphs[index];
+          });
         }
 
         initiateGraphs(graphs);
 
         $('#graphForm').submit(function(e){
+
           console.log('Submitting form...');
           e.preventDefault();
           updateUrl();
           var minYear = $('#minYear').val();
           var maxYear = $('#maxYear').val();
+
           for(var i=0;i<graphs.length;i++){
             console.log('Getting data for: ', graphs[i].title);
             graphs[i].init();
             for(var year=minYear; year<=maxYear; year++) {
               $.ajax({
-                graph: graphs[i],
+                graphIndex: i,
                 year: year,
                 url: graphs[i].url,
                 data: $(this).serialize()+'&minYear='+year+'&maxYear='+year
               }).success(function(data){
-                this.graph.storeData(data,this.year);
+                graphs[this.graphIndex].storeData(data,this.year);
               });
             }
           }
+
+          $( '#slider' ).slider({
+            min: minYear*1,
+            max: maxYear*1,
+            value: maxYear*1,
+            slide: function(e, ui) {
+              console.log(ui.value);
+              for(var i=0; i<graphs.length;i++){
+                graphs[i].drawDetails(ui.value);
+              }
+            }
+          });
+
         })
 
         function initData() {
@@ -1194,6 +1324,9 @@
         $('#breed').autocomplete({
           source: breedList
         });
+
+
+        return graphs;
 
       }());
     </script>
