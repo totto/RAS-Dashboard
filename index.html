@@ -23,7 +23,7 @@
   <body>
     <div class="container">
       <div class="page-header">
-        <h1>RAS Dashboard</h1>
+        <h4>RAS Dashboard</h4>
       </div>
       <div class="row">
         <div class="col-md-12">
@@ -60,7 +60,6 @@
         </div>
 
       </div>
-      <!--div id="slider"></div-->
 
       <div id="detailsContainer" style="display:none">
         <h3>0</h3>
@@ -324,27 +323,20 @@
             }
           }
 
-          $( '#slider' ).slider({
-            min: minYear*1,
-            max: maxYear*1,
-            value: maxYear*1,
-            slide: function(e, ui) {
-              console.log(ui.value);
-              for(var i=0; i<graphs.length;i++){
-                graphs[i].drawDetails(ui.value);
-              }
-            }
-          });
+          $('#graphcontainer').before(
+            '<h2>'+currentBreed.name+'</h2>'+
+            '<a href="'+currentBreed.readmoreurl+'">Les mer om denne rasen hos NKK</a>'
+            )
 
-        })
+        });
 
         function initData() {
           var urlVars = getUrlVars();
           if( urlVars ) {
             if( typeof urlVars['breed'] !== 'undefined' ) {
               var breedName = decodeURI( urlVars['breed'] );
-              var breedObj = getBreedObjByName( breedName );
-              var breedParameters = getParametersFromBreedObj( breedObj );
+              currentBreed = getBreedObjByName( breedName );
+              var breedParameters = getParametersFromBreedObj( currentBreed );
               $('#breed').val( breedName );
               $('#breedParameters').val( breedParameters ); 
             }
@@ -356,7 +348,6 @@
         }
 
         function getBreedObjByName(name) {
-          console.log(breeds);
           for(var i = breeds.length-1; i > 0; i--) {
             if( breeds[i].name == name ) {
               return breeds[i];
@@ -374,6 +365,7 @@
         }
 
         var breeds = [];
+        var currentBreed = {};
 
         $.ajax('Raser.json').done(function(data){
           console.log('Breeds loaded. Initiating graphdata.');
