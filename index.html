@@ -85,8 +85,8 @@
 
       </div>
 
-      <div class="row" id="graphcontainer">
-      </div>
+      <div class="row"><div class="col-md-12" id="breedDetails"></div></div>
+      <div class="row" id="graphcontainer"></div>
     </div>
 
     <script>
@@ -322,8 +322,8 @@
               });
             }
           }
-
-          $('#graphcontainer').before(
+          currentBreed = getBreedObjByName( $('#breed').val() );
+          $('#breedDetails').html(
             '<h2>'+currentBreed.name+'</h2>'+
             '<a href="'+currentBreed.readmoreurl+'">Les mer om denne rasen hos NKK</a>'
             )
