@@ -92,7 +92,6 @@
     <script>
       var GRAPHS = (function(){
 
-
         function updateUrl() {
           console.log('Updated url and pushed state');
           if( window.history.replaceState ) {
@@ -323,10 +322,11 @@
             }
           }
           currentBreed = getBreedObjByName( $('#breed').val() );
-          $('#breedDetails').html(
-            '<h2>'+currentBreed.name+'</h2>'+
-            '<a href="'+currentBreed.readmoreurl+'">Les mer om denne rasen hos NKK</a>'
-            )
+          var breedhtml = '<h2>'+currentBreed.name+'</h2>';
+          if( typeof currentBreed.readmoreurl !== 'undefined' ) {
+            breedhtml += '<a href="'+currentBreed.readmoreurl+'">Les mer om denne rasen hos NKK</a>';
+          }
+          $('#breedDetails').html( breedhtml );
 
         });
 
@@ -337,7 +337,7 @@
               var breedName = decodeURI( urlVars['breed'] );
               currentBreed = getBreedObjByName( breedName );
               var breedParameters = getParametersFromBreedObj( currentBreed );
-              $('#breed').val( breedName );
+              $('#breed').val( currentBreed.name );
               $('#breedParameters').val( breedParameters ); 
             }
             if( typeof urlVars['minYear'] !== 'undefined' ) { $('#minYear').val(urlVars['minYear']); }
@@ -347,13 +347,16 @@
           $('#graphForm').submit();
         }
 
+        var breeds = [];
+        var currentBreed = {};
+
         function getBreedObjByName(name) {
           for(var i = breeds.length-1; i > 0; i--) {
-            if( breeds[i].name == name ) {
+            if( breeds[i].name == name || breeds[i].thesaurus.indexOf(name) >= 0 ) {
               return breeds[i];
             }
           }
-          return {};
+          return false;
         }
 
         function getParametersFromBreedObj(breedObj) {
@@ -363,9 +366,6 @@
           }
           return breedParameters.join('&');
         }
-
-        var breeds = [];
-        var currentBreed = {};
 
         $.ajax('Raser.json').done(function(data){
           console.log('Breeds loaded. Initiating graphdata.');
