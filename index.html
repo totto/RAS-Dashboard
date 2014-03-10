@@ -31,7 +31,7 @@
             <div class="form-group">
               <label for="breed">Rase</label>
               <input type="text" class="form-control" name="breed" id="breed" value="Rottweiler">
-              <input type="hidden" id="breedParameters">
+              <input type="hidden" id="breedParameters" value="Rottweiler">
             </div>
             <div class="form-group">
               <label for="minYear">Registrert fra og med år</label>
@@ -130,12 +130,13 @@
 
 
         // sContainer: object.sContainer.percentiles
-        function graphObject(title, url, sContainer, valueLabel) {
+        function graphObject(conf) {
           return {
-            title: title,
-            url: url,
-            statisticsContainer: sContainer,
-            valueLabel: valueLabel,
+            title: conf.title,
+            url: conf.url,
+            statisticsContainer: conf.sContainer || '',
+            valueLabel: conf.valueLabel,
+            chartType: conf.chartType || 'LineChart',
             data: {},
             divId: function() {
               return this.title.replace(/\s+/g,'');
@@ -144,65 +145,103 @@
               return this.divId()+'_detail';
             },
             storeData: function(data, year){
-              this.data[year+''] = data;
-              if( data[this.statisticsContainer].n > 0 ) {
-                this.dataTable.addRow([
-                  '' + year,
-                  data[this.statisticsContainer].mean,
-                  'Snitt: ' + data[this.statisticsContainer].mean + '\nn: ' + data[this.statisticsContainer].n, // Tooltip for previous data point
+              if( this.chartType =='LineChart') {
+                this.data[year+''] = data;
+                if( data[this.statisticsContainer].n > 0 ) {
+                  this.dataTable.addRow([
+                    '' + year,
+                    data[this.statisticsContainer].mean,
+                    'Snitt: ' + data[this.statisticsContainer].mean + '\nn: ' + data[this.statisticsContainer].n, // Tooltip for previous data point
 
-                  data[this.statisticsContainer].percentile25, // Line graphs for label
-                  data[this.statisticsContainer].percentile75, // Line graphs for label
-                  data[this.statisticsContainer].percentile25, // Area 2
-                  data[this.statisticsContainer].percentile75, // Area 2
+                    data[this.statisticsContainer].percentile25, // Line graphs for label
+                    data[this.statisticsContainer].percentile75, // Line graphs for label
+                    data[this.statisticsContainer].percentile25, // Area 2
+                    data[this.statisticsContainer].percentile75, // Area 2
 
-                  data[this.statisticsContainer].percentile10, // Line graphs for label
-                  data[this.statisticsContainer].percentile90, // Line
-                  data[this.statisticsContainer].percentile10, // Area 1
-                  data[this.statisticsContainer].percentile90 // Area 1
+                    data[this.statisticsContainer].percentile10, // Line graphs for label
+                    data[this.statisticsContainer].percentile90, // Line
+                    data[this.statisticsContainer].percentile10, // Area 1
+                    data[this.statisticsContainer].percentile90 // Area 1
 
-                ]);
+                  ]);
+                  this.dataTable.sort(0);
+
+                  this.chart = new google.visualization['LineChart']( document.getElementById(this.divId()) );
+                  this.chart.draw(this.dataTable, { 
+                    title: this.title, 
+                    // curveType: 'function',
+                    height: 420,
+                    intervals: { style: 'area' },
+                    colors: ['#428bca', '#7df', '#7df', '#bef', '#bef'  , '#428bca', '#428bca', '#428bca', '#428bca', '#428bca', '#428bca'],
+                    legend: {position: 'top', maxLines: 3},
+                    hAxis: {title: 'År'},
+                    vAxis: {title: this.valueLabel, minValue:0},
+                    series: {
+                      0: {pointSize: 5 }
+                    }
+                  });
+                  
+                  google.visualization.events.addListener(this.chart, 'select', function(){
+                    if(activeGraph.chart.getSelection().length > 0 ) {
+                      var year = activeGraph.dataTable.getFormattedValue( activeGraph.chart.getSelection()[0].row, 0 );
+                      console.log( 'Show details for year ', year );
+                      activeGraph.drawDetails(year);
+                    }
+                  });
+                }
+              } else if (this.chartType=='BarChart') {
+                if(typeof this.data.length == 'undefined') this.data = [];
+                data.countByDiagnose.year = year;
+                this.data.push(data.countByDiagnose);
+                var dataArray = [];
+                var keys = getKeys(this.data);
+                
+                // Move year to front
+                var index = keys.indexOf('year');
+                if (index > -1) {
+                    keys.splice(index, 1);
+                }
+                keys.unshift('year');
+
+                dataArray.push( keys );
+                for( var i = 0; i<this.data.length; i++) {
+                  var entryArray = [];
+                  for( var j=0; j<keys.length; j++ ) {
+                    entryArray.push( this.data[i][ keys[j] ] || 0 );
+                  }
+                  dataArray.push( entryArray );
+                }
+                this.dataTable = google.visualization.arrayToDataTable(dataArray, false);
+                console.log('dataarray',dataArray);
                 this.dataTable.sort(0);
 
-                this.chart = new google.visualization['LineChart']( document.getElementById(this.divId()) );
+                this.chart = new google.visualization['BarChart']( document.getElementById(this.divId()) );
                 this.chart.draw(this.dataTable, { 
                   title: this.title, 
-                  // curveType: 'function',
                   height: 420,
-                  intervals: { style: 'area' },
-                  colors: ['#428bca', '#7df', '#7df', '#bef', '#bef'  , '#428bca', '#428bca', '#428bca', '#428bca', '#428bca', '#428bca'],
                   legend: {position: 'top', maxLines: 3},
-                  hAxis: {title: 'År'},
-                  vAxis: {title: this.valueLabel, minValue:0},
-                  series: {
-                    0: {pointSize: 5 }
-                  }
+                  orientation: 'horizontal'
                 });
-                
-                google.visualization.events.addListener(this.chart, 'select', function(){
-                  if(activeGraph.chart.getSelection().length > 0 ) {
-                    var year = activeGraph.dataTable.getFormattedValue( activeGraph.chart.getSelection()[0].row, 0 );
-                    console.log( 'Show details for year ', year );
-                    activeGraph.drawDetails(year);
-                  }
-                });
+
               }
             },
             chart: {},
             dataTable: {},
             init: function() {
-              this.dataTable = new google.visualization.DataTable();
-              this.dataTable.addColumn('string', 'År');
-              this.dataTable.addColumn('number', 'Snitt');
-              this.dataTable.addColumn({type:'string', role:'tooltip'}); // annotation role col.
-              this.dataTable.addColumn({type:'number', label:'25 persentil'});
-              this.dataTable.addColumn({type:'number', label:'75 persentil'});
-              this.dataTable.addColumn({id:'i1', type:'number', role:'interval', label: '25'});
-              this.dataTable.addColumn({id:'i1', type:'number', role:'interval', label: '75'});
-              this.dataTable.addColumn({type:'number', label:'10 persentil'});
-              this.dataTable.addColumn({type:'number', label:'90 persentil'});
-              this.dataTable.addColumn({id:'i2', type:'number', role:'interval', label: '10'});
-              this.dataTable.addColumn({id:'i2', type:'number', role:'interval', label: '90'});
+              if(this.chartType=='LineChart') {
+                this.dataTable = new google.visualization.DataTable();
+                this.dataTable.addColumn('string', 'År');
+                this.dataTable.addColumn('number', 'Snitt');
+                this.dataTable.addColumn({type:'string', role:'tooltip'}); // annotation role col.
+                this.dataTable.addColumn({type:'number', label:'25 persentil'});
+                this.dataTable.addColumn({type:'number', label:'75 persentil'});
+                this.dataTable.addColumn({id:'i1', type:'number', role:'interval', label: '25'});
+                this.dataTable.addColumn({id:'i1', type:'number', role:'interval', label: '75'});
+                this.dataTable.addColumn({type:'number', label:'10 persentil'});
+                this.dataTable.addColumn({type:'number', label:'90 persentil'});
+                this.dataTable.addColumn({id:'i2', type:'number', role:'interval', label: '10'});
+                this.dataTable.addColumn({id:'i2', type:'number', role:'interval', label: '90'});
+              } 
             },
             drawDetails: function(year) {
               console.log('Draw details:', this.data[year]);
@@ -270,10 +309,38 @@
             }
           }
         }
+
         var graphs = [
-          new graphObject('Innavl','/dogpopulation/graph/inbreeding', 'statistics', 'Innavlsgrad %\nKlikk på et punkt for å vise detaljer'),
-          new graphObject('Stamtavlekompletthet','/dogpopulation/graph/pedigreecompleteness', 'pedigreeCompletenessStatistics', 'Kompletthet (%)'),
-          new graphObject('Kullstørrelse','/dogpopulation/graph/litter', 'litterSizeStatistics', 'Kullstørrelse')
+          new graphObject({
+            title: 'Innavl',
+            url:'/dogpopulation/graph/inbreeding', 
+            sContainer:'statistics',
+            valueLabel:'Innavlsgrad %\nKlikk på et punkt for å vise detaljer'
+          }),
+          new graphObject({
+            title:'Stamtavlekompletthet',
+            url:'/dogpopulation/graph/pedigreecompleteness',
+            sContainer:'pedigreeCompletenessStatistics', 
+            valueLabel:'Kompletthet (%)'
+          }),
+          new graphObject({
+            title:'Kullstørrelse',
+            url:'/dogpopulation/graph/litter',
+            sContainer:'litterSizeStatistics',
+            valueLabel:'Kullstørrelse'
+          }),
+          new graphObject({
+            title:'HD-statistikk (fødselsår)',
+            url:'/dogpopulation/graph/hdstatistics/bornyear',
+            valueLabel:'HD-statistikk',
+            chartType:'BarChart'
+          }),
+          new graphObject({
+            title:'HD-statistikk (undersøkelsesår)',
+            url:'/dogpopulation/graph/hdstatistics/xrayyear',
+            valueLabel:'HD-statistikk',
+            chartType:'BarChart'
+          })
         ];
         //?generations=6&breed=Rottweiler&minYear=1999&maxYear=2001
 
@@ -329,6 +396,18 @@
           $('#breedDetails').html( breedhtml );
 
         });
+
+        function getKeys(docs) {
+            var keys = [];
+            for ( var i = 0; i < docs.length; i++ ) {
+                for( var key in docs[i] ) {
+                    if( keys.indexOf( key ) < 0 ) {
+                        keys.push( key );
+                    }
+                }
+            }
+            return keys;
+        }
 
         function initData() {
           var urlVars = getUrlVars();
@@ -387,6 +466,12 @@
               this.value = ui.item.name;
               $('#breedParameters').val( getParametersFromBreedObj(ui.item) );
               return false;
+            },
+            change: function(event, ui) {
+              if (!ui.item) {
+                this.value = '';
+                $('#breedParameters').val('');
+              }
             }
           })
           .data( "ui-autocomplete" )._renderItem = function( ul, item ) {
