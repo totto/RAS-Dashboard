@@ -95,7 +95,12 @@
         function updateUrl() {
           console.log('Updated url and pushed state');
           if( window.history.replaceState ) {
-            var newurl = location.origin + location.pathname;
+
+            if (!window.location.origin) { // IE fix for location origin
+              window.location.origin = window.location.protocol + "//" + window.location.hostname + (window.location.port ? ':' + window.location.port: '');
+            }
+
+            var newurl = window.location.origin + window.location.pathname;
 
             var urlData = [];
             urlData.push( 'breed=' + $('#breed').val() );
@@ -201,6 +206,7 @@
                 if (index > -1) {
                     keys.splice(index, 1);
                 }
+                keys.sort();
                 keys.unshift('year');
 
                 dataArray.push( keys );
@@ -212,7 +218,6 @@
                   dataArray.push( entryArray );
                 }
                 this.dataTable = google.visualization.arrayToDataTable(dataArray, false);
-                console.log('dataarray',dataArray);
                 this.dataTable.sort(0);
 
                 this.chart = new google.visualization['BarChart']( document.getElementById(this.divId()) );
@@ -417,7 +422,7 @@
               currentBreed = getBreedObjByName( breedName );
               var breedParameters = getParametersFromBreedObj( currentBreed );
               $('#breed').val( currentBreed.name );
-              $('#breedParameters').val( breedParameters ); 
+              $('#breedParameters').val( breedParameters );
             }
             if( typeof urlVars['minYear'] !== 'undefined' ) { $('#minYear').val(urlVars['minYear']); }
             if( typeof urlVars['maxYear'] !== 'undefined' ) { $('#maxYear').val(urlVars['maxYear']); }
@@ -451,6 +456,7 @@
           breeds = data.breed;
           initData();
           $('#breed').autocomplete({
+            autoFocus: true,
             source: function(request, response) {
               response( $.grep( breeds, function( el ) {
                 for ( var i=0; i<el.thesaurus.length; i++) {
@@ -471,6 +477,7 @@
               if (!ui.item) {
                 this.value = '';
                 $('#breedParameters').val('');
+                alert('Vennligst velg en rase fra listen.');
               }
             }
           })
