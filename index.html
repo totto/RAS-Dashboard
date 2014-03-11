@@ -31,7 +31,7 @@
             <div class="form-group">
               <label for="breed">Rase</label>
               <input type="text" class="form-control" name="breed" id="breed" value="Rottweiler">
-              <input type="hidden" id="breedParameters" value="Rottweiler">
+              <input type="hidden" id="breedParameters" value="breed=Rottweiler&breed=rottweiler">
             </div>
             <div class="form-group">
               <label for="minYear">Registrert fra og med år</label>
@@ -246,7 +246,9 @@
                 this.dataTable.addColumn({type:'number', label:'90 persentil'});
                 this.dataTable.addColumn({id:'i2', type:'number', role:'interval', label: '10'});
                 this.dataTable.addColumn({id:'i2', type:'number', role:'interval', label: '90'});
-              } 
+              } else if(this.chartType =='BarChart') {
+                this.data=[];
+              }
             },
             drawDetails: function(year) {
               console.log('Draw details:', this.data[year]);
@@ -460,7 +462,7 @@
             source: function(request, response) {
               response( $.grep( breeds, function( el ) {
                 for ( var i=0; i<el.thesaurus.length; i++) {
-                  if( el.thesaurus[i].toLowerCase().indexOf( request.term ) >= 0 ) {
+                  if( el.thesaurus[i].toLowerCase().indexOf( request.term.toLowerCase() ) >= 0 ) {
                     return true;
                   }
                 }
@@ -468,7 +470,6 @@
               }) );
             },
             select: function(event, ui) {
-              console.log('selecting',ui);
               this.value = ui.item.name;
               $('#breedParameters').val( getParametersFromBreedObj(ui.item) );
               return false;
