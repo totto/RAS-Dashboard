@@ -306,7 +306,7 @@
             getDogList: function(dogs) {
               var html = '<ul>';
               for(var i = 0; i<dogs.length; i++) {
-                html += '<li><a target="_blank" href="http://dogid.nkk.no/?query='+dogs[i].uuid+'">'+dogs[i].regNo+'</a></li>';
+                html += '<li><a target="_blank" href="http://dogpopulation.nkk.no/?query='+dogs[i].uuid+'">'+dogs[i].regNo+'</a></li>';
               }
               if(dogs.length < 1 ) {
                 html += '<li>Ingen hunder</li>';
