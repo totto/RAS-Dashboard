@@ -421,10 +421,15 @@
           if( urlVars ) {
             if( typeof urlVars['breed'] !== 'undefined' ) {
               var breedName = decodeURI( urlVars['breed'] );
+              console.log('Initiated with breed:', breedName);
               currentBreed = getBreedObjByName( breedName );
-              var breedParameters = getParametersFromBreedObj( currentBreed );
-              $('#breed').val( currentBreed.name );
-              $('#breedParameters').val( breedParameters );
+              if( currentBreed ) {
+                var breedParameters = getParametersFromBreedObj( currentBreed );
+                $('#breed').val( currentBreed.name );
+                $('#breedParameters').val( breedParameters );
+              } else {
+                alert('Kunne ikke finne rasen "'+breedName+'".');
+              }
             }
             if( typeof urlVars['minYear'] !== 'undefined' ) { $('#minYear').val(urlVars['minYear']); }
             if( typeof urlVars['maxYear'] !== 'undefined' ) { $('#maxYear').val(urlVars['maxYear']); }
