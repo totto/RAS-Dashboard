@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Breed Statistics</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+    <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+    <script type="text/javascript">
+      google.load("visualization", "1", {packages:["corechart","table"]});
+    </script>
+    <link href="//netdna.bootstrapcdn.com/bootswatch/3.1.1/cerulean/bootstrap.min.css" rel="stylesheet">
+  </head>
+  <body>
+    <div class="container">
+      <h1>Breed Statistics Snippets</h1>
+      <h3>Dependencies</h3>
+      <ul>
+        <li>jQuery</li>
+        <li>Google Chart</li>
+      </ul>
+      <h3>Usage</h3>
+      <h4>BREEDSTATS.draw();</h4>
+      <h5>Draws breed statistics chart at the script tag location.</h5>
+      <pre>
+      BREEDSTATS.draw( breed, graphtypes );
+      BREEDSTATS.draw( breed, graphtypes, from-year, to-year, generations );</pre>
+      <div class="panel panel-default">
+        <table class="table">
+          <tr>
+            <th>breed</th>
+            <td>Name of the breed. E.g. 'Rottweiler'.</td>
+            </tr>
+          <tr>
+            <th>graphtypes</th>
+            <td>The types of graphs you want to display. Possible values are
+            <ul>
+              <li>Innavl</li>
+              <li>Stamtavlekompletthet</li>
+              <li>Kull</li>
+              <li>HD</li>
+            </ul>
+            Show multiple graphs by writing multiple values in this field. E.g. "Innavl Kull HD" </td>
+            </tr>
+          <tr>
+            <th>from-year, to-year</th>
+            <td>Start and end years to be charted in the graph. Default: 2004 and 2014.</td>
+            </tr>
+          <tr>
+            <th>generations</th>
+            <td>Number of generations to use for calculations of inbreeding. Default: 6.</td>
+            </tr>
+        </table>
+      </div>
+      <h5>Example</h5>
+      <pre>
+        &lt;script&gt;
+          BREEDSTATS.draw( 'Rottweiler', 'Innavl', 2010, 2013, 5 );
+        &lt;/script&gt;</pre>
+      <h4>BREEDSTATS.setBaseUrl()</h4>
+      <h5>Setting the base url for the graph endpoints.</h5>
+      <pre>
+        &lt;script&gt;
+          BREEDSTATS.setBaseUrl( 'yourdomain.com/dogpopulation/graph/' );
+        &lt;/script&gt;</pre>
+      <p>Baseurl must be set before drawing the graphs.</p>
+      <div class="alert alert-warning"><strong>Note:</strong> yourdomain.com server needs to accept requests from the sender domain.</div>
+
+      <h3>Live example</h3>
+      <script src="breedstats.js"></script>
+      <script>
+          BREEDSTATS.draw('Rottweiler', 'Innavl', 2010, 2013, 5);
+          BREEDSTATS.draw('Affenpinscher', 'HD');
+      </script>
+    </div>
+  </body>
+</html>
